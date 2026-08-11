@@ -1,0 +1,16 @@
+{
+  "name": "Music Timeline",
+  "short_name": "MusicTimeline",
+  "start_url": "./?card=001",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
