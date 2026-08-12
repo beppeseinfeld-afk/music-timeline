@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171228">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Music Timeline</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#171228;
+  --panel:#241c3a;
+  --panel2:#2d2346;
+  --cream:#fff8ea;
+  --gold:#ffd166;
+  --pink:#ff7aa2;
+  --mint:#7be0c3;
+  --ink:#171228;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255,122,162,.16), transparent 28%),
+    radial-gradient(circle at 85% 15%, rgba(123,224,195,.14), transparent 25%),
+    linear-gradient(180deg,#171228 0%,#0f0c1b 100%);
+  color:var(--cream);
+  font-family:Arial,Helvetica,sans-serif;
+  padding:18px 14px 28px;
+}
+.app{max-width:520px;margin:0 auto}
+.board{
+  background:linear-gradient(180deg,var(--panel),#1c1630);
+  border:2px solid rgba(255,255,255,.08);
+  border-radius:30px;
+  padding:24px 18px 20px;
+  box-shadow:0 18px 48px rgba(0,0,0,.35);
+  position:relative;
+  overflow:hidden;
+}
+.board:before,.board:after{
+  content:"";
+  position:absolute;
+  width:90px;height:90px;border-radius:50%;
+  border:2px dashed rgba(255,209,102,.25);
+}
+.board:before{top:-35px;right:-25px}
+.board:after{bottom:-38px;left:-30px}
+.logo{font-size:62px;line-height:1}
+.game-title{
+  font-size:32px;
+  line-height:1.05;
+  margin:10px 0 8px;
+  letter-spacing:.2px;
+}
+.subtitle{font-size:17px;line-height:1.45;opacity:.84;margin:0 0 22px}
+.badge{
+  display:inline-block;
+  margin:4px 0 14px;
+  padding:9px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  font-weight:700;
+  font-size:14px;
+  letter-spacing:.6px;
+}
+button,a.action{
+  display:flex;
+  width:100%;
+  min-height:64px;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  border:0;
+  border-radius:18px;
+  padding:16px 18px;
+  margin-top:14px;
+  font-size:19px;
+  font-weight:800;
+  text-decoration:none;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+.primary{background:linear-gradient(180deg,#fffdf8,#f2eadc);color:var(--ink)}
+.amazon{background:linear-gradient(180deg,#ffd166,#ffbd3d);color:#211600}
+.reveal{background:linear-gradient(180deg,#ff88ac,#ff6a98);color:#29101a}
+.secondary{background:linear-gradient(180deg,#3a2d59,#2d2346);color:var(--cream);border:1px solid rgba(255,255,255,.1)}
+#scannerView,#gameView,#answer{display:none}
+#reader{
+  width:100%;
+  margin-top:18px;
+  overflow:hidden;
+  border-radius:22px;
+  background:#000;
+  border:3px solid rgba(123,224,195,.7);
+}
+#reader video{border-radius:18px}
+.error{color:#ffb7c6;font-size:15px;margin-top:12px;line-height:1.4}
+.answer-card{
+  margin-top:18px;
+  padding:22px 16px;
+  border-radius:22px;
+  background:linear-gradient(145deg,#fff8ea,#ffeecf);
+  color:var(--ink);
+  border:3px solid var(--gold);
+  box-shadow:inset 0 0 0 4px rgba(255,255,255,.6),0 10px 25px rgba(0,0,0,.2)
+}
+.year{
+  font-size:62px;
+  line-height:1;
+  font-weight:900;
+  color:#d14d72;
+  letter-spacing:-2px;
+}
+.artist{
+  font-size:24px;
+  font-weight:900;
+  margin-top:12px;
+}
+.title{
+  font-size:22px;
+  line-height:1.2;
+  margin-top:8px;
+  font-weight:800;
+  color:#6b3faf;
+}
+.rule{
+  height:1px;
+  background:rgba(255,255,255,.12);
+  margin:18px 0 4px;
+}
+.small-note{font-size:13px;opacity:.6;margin-top:14px}
+@media (max-width:390px){
+  .game-title{font-size:29px}
+  button,a.action{font-size:18px;min-height:60px}
+  .year{font-size:56px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+
+<section class="board" id="homeView">
+  <div class="logo">🎵</div>
+  <h1 class="game-title">Music Timeline</h1>
+  <p class="subtitle">Scansiona una carta e prova a indovinare dove si colloca nella storia della musica.</p>
+  <button class="primary" id="startScanBtn">📷 SCANSIONA CARTA</button>
+  <div class="small-note">20 carte pronte nel mazzo</div>
+</section>
+
+<section class="board" id="scannerView">
+  <div class="logo">📷</div>
+  <h1 class="game-title">Scansiona la carta</h1>
+  <p class="subtitle">Inquadra il QR dentro il riquadro.</p>
+  <div id="reader"></div>
+  <div class="error" id="scanError"></div>
+  <button class="secondary" id="cancelScanBtn">← ANNULLA</button>
+</section>
+
+<section class="board" id="gameView">
+  <div class="logo">🎶</div>
+  <h1 class="game-title">Canzone misteriosa</h1>
+  <p class="subtitle">Ascolta il brano e prova a collocarlo nella tua timeline.</p>
+  <div class="badge" id="cardCode"></div>
+
+  <a class="action amazon" id="listenBtn" href="#" rel="noopener">▶ ASCOLTA SU AMAZON MUSIC</a>
+
+  <button class="reveal" id="revealBtn">👁 MOSTRA LA RISPOSTA</button>
+
+  <div class="answer-card" id="answer">
+    <div class="year" id="year"></div>
+    <div class="artist" id="artist"></div>
+    <div class="title" id="title"></div>
+  </div>
+
+  <div class="rule"></div>
+
+  <button class="primary" id="scanAgainBtn">📷 SCANSIONA UN'ALTRA CARTA</button>
+</section>
+
+</main>
+
+<script>
+const cards={"001": {"year": "1976", "artist": "Queen", "title": "Somebody To Love", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NFK2QB&do=play"}, "002": {"year": "1979", "artist": "Queen", "title": "Crazy Little Thing Called Love", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NNVX8Q&do=play"}, "003": {"year": "1986", "artist": "Queen", "title": "Friends Will Be Friends", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NF8VMT&do=play"}, "004": {"year": "1978", "artist": "Queen", "title": "Jealousy", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NQCSSN&do=play"}, "005": {"year": "1986", "artist": "Queen", "title": "One Year Of Love", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5P18HH5&do=play"}, "006": {"year": "1995", "artist": "Queen", "title": "A Winter's Tale", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NWHD6Z&do=play"}, "007": {"year": "1975", "artist": "Queen", "title": "'39", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NF6LCT&do=play"}, "008": {"year": "1995", "artist": "Queen", "title": "Mother Love", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NZKL56&do=play"}, "009": {"year": "1984", "artist": "Queen", "title": "It's A Hard Life", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NZ5H61&do=play"}, "010": {"year": "1980", "artist": "Queen", "title": "Save Me", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NH59R7&do=play"}, "011": {"year": "1995", "artist": "Queen", "title": "Made In Heaven", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5P1BFV4&do=play"}, "012": {"year": "1995", "artist": "Queen", "title": "Too Much Love Will Kill You", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NJ2H9W&do=play"}, "013": {"year": "1980", "artist": "Queen", "title": "Sail Away Sweet Sister", "amazon": "https://music.amazon.it/albums/B0H5NFH4X4?trackAsin=B0H5NR6QYQ&do=play"}, "014": {"year": "1990", "artist": "The Quireboys", "title": "Sweet Mary Ann", "amazon": "https://music.amazon.it/albums/B009IFWFC4?trackAsin=B008QECG2C&do=play"}, "015": {"year": "1977", "artist": "Status Quo", "title": "Rockin' All Over The World", "amazon": "https://music.amazon.it/albums/B0098CLSAC?trackAsin=B0098CLVG8&do=play"}, "016": {"year": "1974", "artist": "Grand Funk Railroad", "title": "Some Kind Of Wonderful", "amazon": "https://music.amazon.it/albums/B008P62B7G?trackAsin=B008P62S38&do=play"}, "017": {"year": "1990", "artist": "Extreme", "title": "Get The Funk Out", "amazon": "https://music.amazon.it/albums/B07L2CW2WY?trackAsin=B07L2CSHFG&do=play"}, "018": {"year": "1967", "artist": "The Doors", "title": "Break on Through (To the Other Side)", "amazon": "https://music.amazon.it/albums/B009IBS2SE?trackAsin=B008L99HLA&do=play"}, "019": {"year": "1997", "artist": "Kenny Wayne Shepherd", "title": "Blue on Black", "amazon": "https://music.amazon.it/albums/B009INCYSG?trackAsin=B008N58NHG&do=play"}, "020": {"year": "1991", "artist": "Drivin N Cryin", "title": "Build A Fire", "amazon": "https://music.amazon.it/albums/B009IUFPVW?trackAsin=B00987IMCO&do=play"}};
+let scanner=null;
+
+const homeView=document.getElementById("homeView");
+const scannerView=document.getElementById("scannerView");
+const gameView=document.getElementById("gameView");
+
+function showOnly(view){
+  homeView.style.display="none";
+  scannerView.style.display="none";
+  gameView.style.display="none";
+  view.style.display="block";
+}
+
+function extractCardId(text){
+  let value=String(text||"").trim();
+  try{
+    const u=new URL(value);
+    const card=u.searchParams.get("card");
+    if(card)value=card;
+  }catch(e){}
+  const match=value.match(/(?:card=)?(\d{1,3})/i);
+  return match?match[1].padStart(3,"0"):null;
+}
+
+function loadCard(id){
+  const card=cards[id];
+  if(!card)return false;
+
+  document.getElementById("cardCode").textContent="CARTA "+id;
+  document.getElementById("listenBtn").href=card.amazon;
+  document.getElementById("year").textContent=card.year;
+  document.getElementById("artist").textContent=card.artist;
+  document.getElementById("title").textContent=card.title;
+  document.getElementById("answer").style.display="none";
+  document.getElementById("revealBtn").style.display="flex";
+
+  showOnly(gameView);
+  return true;
+}
+
+async function stopScanner(){
+  if(scanner){
+    try{await scanner.stop();}catch(e){}
+    scanner=null;
+    document.getElementById("reader").innerHTML="";
+  }
+}
+
+async function startScanner(){
+  await stopScanner();
+  document.getElementById("scanError").textContent="";
+  showOnly(scannerView);
+
+  scanner=new Html5Qrcode("reader");
+
+  try{
+    await scanner.start(
+      {facingMode:"environment"},
+      {fps:10,qrbox:{width:260,height:260}},
+      async decodedText=>{
+        const id=extractCardId(decodedText);
+        if(id&&cards[id]){
+          await stopScanner();
+          loadCard(id);
+        }else{
+          document.getElementById("scanError").textContent=
+            id?"Carta "+id+" non presente nell'app.":"QR non valido.";
+        }
+      },
+      ()=>{}
+    );
+  }catch(err){
+    document.getElementById("scanError").textContent=
+      "Non riesco ad aprire la fotocamera. Controlla il permesso del browser.";
+  }
+}
+
+document.getElementById("startScanBtn").onclick=startScanner;
+document.getElementById("scanAgainBtn").onclick=startScanner;
+
+document.getElementById("cancelScanBtn").onclick=async()=>{
+  await stopScanner();
+  showOnly(homeView);
+};
+
+document.getElementById("revealBtn").onclick=function(){
+  document.getElementById("answer").style.display="block";
+  this.style.display="none";
+};
+
+const initial=new URLSearchParams(location.search).get("card");
+if(initial&&cards[String(initial).padStart(3,"0")]){
+  loadCard(String(initial).padStart(3,"0"));
+}else{
+  showOnly(homeView);
+}
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+</body>
+</html>
